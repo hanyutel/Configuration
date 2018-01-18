@@ -1,0 +1,60 @@
+	* 反向代理
+
+		* 指以代理服务器来接受internet上的连接请求，然后将请求转发给内部网络上的服务器，并将从服务器上得到的结果返回给internet上请求连接的客户端，此时代理服务器对外就表现为一个反向代理服务器。
+	* 在Linux中安装Nginx
+		* 四种安装包，最后装nginx，pcre需要gcc++环境
+
+			* pcre-8.37.tar.gz
+			* openssl-1.0.1t.tar.gz
+			* zlib-1.2.8.tar.gz
+			* nginx-1.11.1.tar.gz
+		* 解压缩包 ----- 执行./config | ./configure ----- 
+		* nginx无法启动：cannot open shared object file
+
+			* ln -s /usr/local/lib/libpcre.so.1 /lib64
+	* 启动Nginx
+
+		* 启动  ./nginx
+		* 关闭  ./nginx  -s  stop
+		* 重新加载    ./nginx  -s  reload
+		* 设置自启动   在/etc/rc.d/rc启动脚本中加入 /usr/local/nginx/sbin/nginx
+
+	* session共享
+		* 将jar包拷贝到tomcat的lib下
+			* tomcat-redis-session-manager1.2.jar
+			* jedis-2.5.2
+			* commons-pool2-2.0
+		* 在tomcat的content.xml中配置参数（最下方）
+
+  <Valve className="com.orangefunction.tomcat.redissessions.RedisSessionHandlerValve" /> 
+  <Manager className="com.orangefunction.tomcat.redissessions.RedisSessionManager" 
+   host="127.0.0.1"   
+   port="6379" 
+   database="0"  />
+
+	*     配置nginx.conf
+
+http {
+......
+     upstream myserver{
+           #ip_hash;
+           server 115.28.52.63:8080 weight=1;
+           server 115.28.52.63:8180 weight=1;
+       }
+.....
+      server{
+          location / {
+                         .........
+             proxy_pass http://myserver;
+                         proxy_connect_timeout 10;
+           }
+                  .........
+        }
+}
+	* master-workers机制的好处
+
+		* 对于每个worker进程来说，独立的进程不需要加锁，节省了锁带来的开销
+		* 独立的进程可以使互相不影响，当有一个进行异常退出时不会导致所有进程挂掉，降低风险
+
+                 
+
